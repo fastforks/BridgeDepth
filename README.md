@@ -1,6 +1,6 @@
 # BridgeDepth: faster inference fork
 
-> **You are on `portable`.** Research fork of [aeolusguan/BridgeDepth](https://github.com/aeolusguan/BridgeDepth) (base `9a23160`, 2026-05-26; `main` mirrors upstream). Two branches:
+> **You are on `cuda-kernels`.** Research fork of [aeolusguan/BridgeDepth](https://github.com/aeolusguan/BridgeDepth) (base `9a23160`, 2026-05-26; `main` mirrors upstream). Two branches:
 > - [`portable`](https://github.com/fastforks/BridgeDepth/tree/portable): plain PyTorch (`bridgedepth/fp16.py`: `prepare_fp16(model)`, run under `torch.autocast("cuda", torch.float16)`); no build step. For ONNX / TensorRT export the unmodified model (upstream already exports).
 > - [`cuda-kernels`](https://github.com/fastforks/BridgeDepth/tree/cuda-kernels): `portable` plus a fused window-attention CUDA kernel (`bridgedepth/fast.py`: `prepare_fast(model)`; prebuilt cubins for sm_80/86/89/90/120, otherwise compiled once with nvcc from `$CUDA_HOME`).
 >
