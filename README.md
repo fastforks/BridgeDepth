@@ -1,3 +1,22 @@
+# BridgeDepth: faster inference fork
+
+> **You are on `portable`.** Research fork of [aeolusguan/BridgeDepth](https://github.com/aeolusguan/BridgeDepth) (base `9a23160`, 2026-05-26; `main` mirrors upstream). Two branches:
+> - [`portable`](https://github.com/fastforks/BridgeDepth/tree/portable): plain PyTorch (`bridgedepth/fp16.py`: `prepare_fp16(model)`, run under `torch.autocast("cuda", torch.float16)`); no build step. For ONNX / TensorRT export the unmodified model (upstream already exports).
+> - [`cuda-kernels`](https://github.com/fastforks/BridgeDepth/tree/cuda-kernels): `portable` plus a fused window-attention CUDA kernel (`bridgedepth/fast.py`: `prepare_fast(model)`; prebuilt cubins for sm_80/86/89/90/120, otherwise compiled once with nvcc from `$CUDA_HOME`).
+>
+> Licence, as upstream (see `LICENSE`). Zero-shot checkpoint `rvc_pretrain`; the other ConvNeXt checkpoints (e.g. `l_sf`) are pre-training checkpoints.
+
+`rvc_pretrain`, fp16 autocast for portable / cuda-kernels, fp32 for upstream; RTX 5060 Ti 16 GB, torch 2.14.1+cu130, 2026-10-23. Median of 10 runs after 3 warm-ups; memory = torch peak allocated / reserved; EPE = non-occluded pixels, first 6 ETH3D training scenes and 6 Middlebury-H scenes (short check, not a full evaluation); TensorRT: not measured. upstream + flags = unmodified upstream code (fp32 checkpoint; `model.half()` applied from the driver only if variant is `flags_half`), driver-side only: torch.inference_mode, cudnn.benchmark=True, TF32 allowed, fp16 autocast, variant `flags_half` chosen as fastest with EPE within noise of upstream (all tried: flags: 467 ms, EPE 0.088/1.234; flags_cl: 459 ms, EPE 0.088/1.232; flags_half: 441 ms, EPE 0.088/1.238); torch.compile not part of the row.
+
+| version | KITTI ms | Midd-H ms | speed-up at H (vs flags / vs upstream) | peak MB at KITTI (alloc / reserved) | peak MB at H (alloc / reserved) | startup / new size | ETH3D EPE (6 scenes) | Midd-H EPE (6 scenes) | max / mean abs diff vs upstream at H (px) |
+|---|---|---|---|---|---|---|---|---|---|
+| upstream (fp32) | 208.1 | 628.2 | 1.00x | 1903 / 2036 | 2948 / 3332 | 8.3 s / 0.77 s | 0.088 | 1.233 | - |
+| upstream + flags (inference_mode, fp16 autocast, TF32, cudnn.benchmark, model.half()) | 111.0 | 441.1 | 1.42x | 1082 / 1304 | 1828 / 2632 | 5.9 s / 2.59 s | 0.088 | 1.238 | 53.78 / 0.0134 |
+| **portable** | 114.4 | 443.7 | 0.99x / 1.42x | 1909 / 2038 | 2975 / 3354 | 9.3 s / 0.45 s | 0.088 | 1.236 | 54.08 / 0.0140 |
+| **cuda-kernels** | 113.4 | 435.8 | 1.01x / 1.44x | 1912 / 2038 | 2975 / 3356 | 7.4 s / 0.44 s | 0.088 | 1.237 | 54.18 / 0.0139 |
+
+---
+
 # BridgeDepth
 
 Official implementation of paper:
